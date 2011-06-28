@@ -17,7 +17,7 @@ import org.json.JSONObject;
 import org.vatvit.irccloud.events.EventListener;
 
 public class Connection {
-	private String username;
+	private String email;
 	private String password;
 	private boolean connected;
 	private String session;
@@ -26,8 +26,8 @@ public class Connection {
 	private String loginUrl = "https://irccloud.com/chat/login";
 	private String streamUrl = "https://irccloud.com/chat/stream";
 
-	public Connection(String username, String password) {
-		this.username = username;
+	public Connection(String email, String password) {
+		this.email = email;
 		this.password = password;
 		this.connected = false;
 	}
@@ -38,7 +38,7 @@ public class Connection {
 		String data = "";
 		try {
 			data = URLEncoder.encode("email", "UTF-8") + "="
-					+ URLEncoder.encode(this.username, "UTF-8");
+					+ URLEncoder.encode(this.email, "UTF-8");
 			data += "&" + URLEncoder.encode("password", "UTF-8") + "="
 					+ URLEncoder.encode(this.password, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
@@ -142,12 +142,12 @@ public class Connection {
 		}
 	}
 
-	public String getUsername() {
-		return username;
+	public String getEmail() {
+		return email;
 	}
 
-	public void setUsername(String username) {
-		this.username = username;
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 	public String getPassword() {
