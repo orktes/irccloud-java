@@ -8,6 +8,7 @@ public class Test {
 		Connection ircConn = new Connection("email@address.com", "password");
 		
 		ircConn.addEventListener(new EventListener(){
+			@Override
 			public void onEvent(JSONObject event) {
 				System.out.println("Event: "+event.toString());
 			}	

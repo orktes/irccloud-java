@@ -1,5 +1,6 @@
 package org.vatvit.irccloud;
 
+
 public class Client {
 	public Connection connection;
 	
@@ -18,7 +19,5 @@ public class Client {
 	public void setConnection(Connection connection) {
 		this.connection = connection;
 	}
-	
-	
 	
 }

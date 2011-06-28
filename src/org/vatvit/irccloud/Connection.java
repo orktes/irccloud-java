@@ -105,6 +105,7 @@ public class Connection {
 		final Connection self = this;
 		if (this.connected) {
 			(new Thread() {
+				@Override
 				public void run() {
 					URL streamURL = null;
 					try {
