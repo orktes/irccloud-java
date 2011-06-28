@@ -11,6 +11,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,7 +22,7 @@ public class Connection {
 	private String password;
 	private boolean connected;
 	private String session;
-	private ArrayList<EventListener> eventListeners = new ArrayList<EventListener>();
+	private HashMap<String, ArrayList<EventListener>> eventListeners = new HashMap<String, ArrayList<EventListener>>();
 
 	private String loginUrl = "https://irccloud.com/chat/login";
 	private String streamUrl = "https://irccloud.com/chat/stream";
@@ -175,24 +176,47 @@ public class Connection {
 		this.session = session;
 	}
 
-	public void addEventListener(EventListener listener) {
-		this.eventListeners.add(listener);
+	public void addEventListener(String type, EventListener listener) {
+		ArrayList<EventListener> list = this.eventListeners.get(type);
+		if(list == null) {
+			list = new ArrayList<EventListener>();
+			this.eventListeners.put(type, list);
+		}
+		list.add(listener);
 	}
 
-	public void removeEventListener(EventListener listener) {
-		this.eventListeners.remove(listener);
+	public void removeEventListener(String type, EventListener listener) {
+		ArrayList<EventListener> list = this.eventListeners.get(type);
+		if(list == null) {
+			return;
+		}
+		list.remove(listener);
 	}
 
-	public ArrayList<EventListener> getEventListeners() {
+	public HashMap<String, ArrayList<EventListener>> getEventListeners() {
 		return eventListeners;
 	}
 
-	public void setEventListeners(ArrayList<EventListener> eventListeners) {
+	public void setEventListeners(HashMap<String, ArrayList<EventListener>> eventListeners) {
 		this.eventListeners = eventListeners;
 	}
 
 	private void onEvent(JSONObject event) {
-		for (EventListener listener : this.eventListeners) {
+		String type = null;
+		try {
+			type = event.getString("type");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if(type == null) {
+			return;
+		}
+		ArrayList<EventListener> listeners = this.eventListeners.get(type);
+		if(listeners == null) {
+			return;
+		}
+		for (EventListener listener : listeners) {
 			listener.onEvent(event);
 		}
 	}
