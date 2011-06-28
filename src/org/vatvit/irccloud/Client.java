@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.vatvit.irccloud.events.EventListener;
+import org.vatvit.irccloud.events.ServersListener;
 
 
 public class Client {
@@ -12,6 +13,8 @@ public class Client {
 	private String name;
 	private String email;
 	private ArrayList<Server> servers = new ArrayList<Server>();
+	private ArrayList<ServersListener> serverListeners = new ArrayList<ServersListener>();
+	
 	
 	public Client(String email, String password) {
 		this.connection = new Connection(email, password);
@@ -36,6 +39,7 @@ public class Client {
 			public void onEvent(JSONObject event) {
 				Server server = new Server(connection, event);
 				servers.add(server);
+				connectedToServer(server);
 			}
 		});
 	}
@@ -75,7 +79,33 @@ public class Client {
 	public void setServers(ArrayList<Server> servers) {
 		this.servers = servers;
 	}
+
+	public void addServerListener(ServersListener listener) {
+		serverListeners.add(listener);
+	}
 	
+	public void removeServerListener(ServersListener listener) {
+		serverListeners.remove(listener);
+	}
+	
+	public ArrayList<ServersListener> getServerListeners() {
+		return serverListeners;
+	}
+
+	public void setServerListeners(ArrayList<ServersListener> serverListeners) {
+		this.serverListeners = serverListeners;
+	}
+	
+	private void connectedToServer(Server server) {
+		for(ServersListener listener : this.serverListeners) {
+			listener.connectedToServer(server);
+		}
+	}
+	private void disconnectedFromServer(Server server) {
+		for(ServersListener listener : this.serverListeners) {
+			listener.disconnectedFromServer(server);
+		}
+	}
 	
 	
 }
