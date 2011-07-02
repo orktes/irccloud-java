@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.vatvit.irccloud.events.EventListener;
+import org.vatvit.irccloud.events.ServerListener;
 import org.vatvit.irccloud.events.ServersListener;
 
 
@@ -16,9 +17,8 @@ public class Client {
 	private ArrayList<ServersListener> serverListeners = new ArrayList<ServersListener>();
 	
 	
-	public Client(String email, String password) {
-		this.connection = new Connection(email, password);
-		initListeners();
+	public Client() {
+		
 	}
 	
 	private void initListeners() {
@@ -38,16 +38,57 @@ public class Client {
 		this.connection.addEventListener("makeserver", new EventListener(){
 			public void onEvent(JSONObject event) {
 				Server server = new Server(connection, event);
+				server.addServerListener(new ServerListener(){
+					@Override
+					public void newChannel(Channel channel) {
+						update();
+					}
+
+					@Override
+					public void channelRemoved(Channel channel) {
+						update();
+					}
+					
+				});
 				servers.add(server);
 				connectedToServer(server);
 			}
 		});
+		//connection_deleted
+		this.connection.addEventListener("connection_deleted", new EventListener(){
+			public void onEvent(JSONObject event) {
+				int cid = 0;
+				try {
+					cid = event.getInt("cid");
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				Server server = null;
+				for(Server serv : servers) {
+					if(serv.getCid() == cid) {
+						server = serv;
+						break;
+					}
+				}
+				servers.remove(server);
+				if(server != null) {
+					connectedToServer(server);
+				}
+			}
+		});
 	}
 	
-	public boolean login() {
+	public boolean login(String email, String password) {
+		this.connection = new Connection(email, password);
+		initListeners();
 		return this.connection.login();
 	}
 
+	public boolean isLoggedIn() {
+		return this.connection != null && this.connection.isConnected();
+	}
+	
 	public Connection getConnection() {
 		return connection;
 	}
@@ -104,6 +145,11 @@ public class Client {
 	private void disconnectedFromServer(Server server) {
 		for(ServersListener listener : this.serverListeners) {
 			listener.disconnectedFromServer(server);
+		}
+	}
+	private void update() {
+		for(ServersListener listener : this.serverListeners) {
+			listener.update();
 		}
 	}
 	

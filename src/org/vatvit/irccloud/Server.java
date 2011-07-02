@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.vatvit.irccloud.events.EventListener;
+import org.vatvit.irccloud.events.ServerListener;
+import org.vatvit.irccloud.events.ServersListener;
 
 public class Server {
 	private Connection connection;
@@ -21,6 +23,7 @@ public class Server {
 	private String serverPass;
 	private int cid;
 	
+	private ArrayList<ServerListener> listeners = new ArrayList<ServerListener>();
 	private ArrayList<Channel> channels = new ArrayList<Channel>();
 	private ArrayList<Private> privates = new ArrayList<Private>();
 	
@@ -47,18 +50,51 @@ public class Server {
 	}
 	
 	private void initListeners() {
+		final Server self = this;
 		this.connection.addEventListener("channel_init", new EventListener(){
 			public void onEvent(JSONObject event) {
 				try {
 					if(event.getInt("cid") == cid) {
 						Channel channel = new Channel(connection, event);
 						channels.add(channel);
+						newChannel(channel);
 					}
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
 			}
 		});
+		
+		//you_parted_channel
+		this.connection.addEventListener("you_parted_channel", new EventListener(){
+			public void onEvent(JSONObject event) {
+				int ecid = 0;
+				try {
+					ecid = event.getInt("cid");
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if(ecid != self.cid) {
+					return;
+				}
+				String chan;
+				try {
+					chan = event.getString("chan");
+				} catch (JSONException e) {
+					e.printStackTrace();
+					return;
+				}
+				for(Channel channel : channels) {
+					if(channel.getName().equalsIgnoreCase(chan)) {
+						channels.remove(channel);
+						channelRemoved(channel);
+						return;
+					}
+				}
+			}
+		});
+		
 		this.connection.addEventListener("makebuffer", new EventListener(){
 			public void onEvent(JSONObject event) {
 				
@@ -185,7 +221,37 @@ public class Server {
 	public void setPrivates(ArrayList<Private> privates) {
 		this.privates = privates;
 	}
+
+	@Override
+	public String toString() {
+		return name;
+	}
 	
+	public void addServerListener(ServerListener listener) {
+		listeners.add(listener);
+	}
 	
+	public void removeServerListener(ServerListener listener) {
+		listeners.remove(listener);
+	}
+	
+	public ArrayList<ServerListener> getServerListeners() {
+		return listeners;
+	}
+
+	public void setServerListeners(ArrayList<ServerListener> serverListeners) {
+		listeners = serverListeners;
+	}
+	
+	private void newChannel(Channel channel) {
+		for(ServerListener listener : this.listeners) {
+			listener.newChannel(channel);
+		}
+	}
+	private void channelRemoved(Channel channel) {
+		for(ServerListener listener : this.listeners) {
+			listener.channelRemoved(channel);
+		}
+	}
 	
 }

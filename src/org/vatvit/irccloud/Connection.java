@@ -133,6 +133,7 @@ public class Connection {
 						}
 
 						rd.close();
+						connected = false;
 						
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
