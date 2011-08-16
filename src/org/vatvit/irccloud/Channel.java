@@ -32,9 +32,11 @@ public class Channel {
 			this.cid = object.getInt("cid");
 			this.name = object.getString("chan");
 			JSONObject topicObj = object.getJSONObject("topic");
-			this.topic = topicObj.getString("topic_text");
-			this.topicAuthor = topicObj.getString("topic_author");
-			this.topicTime = topicObj.getInt("topic_time");
+			if(!topicObj.isNull("topic_text")) {
+				this.topic = topicObj.getString("topic_text");
+				this.topicAuthor = topicObj.getString("topic_author");
+				this.topicTime = topicObj.getInt("topic_time");
+			}
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -147,6 +149,14 @@ public class Channel {
 		for(ChannelListener listener : this.listeners) {
 			listener.newMessage(message);
 		}
+	}
+	
+	public void sendMessage(String message) {
+		ArrayList<NameValuePair> values = new ArrayList<NameValuePair>();
+		values.add(new NameValuePair("cid", this.cid+""));
+		values.add(new NameValuePair("msg", message));
+		values.add(new NameValuePair("to", this.name));
+		this.connection.postData("say", values);
 	}
 	
 	

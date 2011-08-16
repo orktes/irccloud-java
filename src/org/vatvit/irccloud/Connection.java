@@ -22,10 +22,12 @@ public class Connection {
 	private String password;
 	private boolean connected;
 	private String session;
+	private int reqCount=0;
 	private HashMap<String, ArrayList<EventListener>> eventListeners = new HashMap<String, ArrayList<EventListener>>();
 
-	private String loginUrl = "https://irccloud.com/chat/login";
+
 	private String streamUrl = "https://irccloud.com/chat/stream";
+	private String actionUrl = "https://irccloud.com/chat/";
 
 	public Connection(String email, String password) {
 		this.email = email;
@@ -49,7 +51,7 @@ public class Connection {
 
 		URL loginURL = null;
 		try {
-			loginURL = new URL(loginUrl);
+			loginURL = new URL(actionUrl+"login");
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -221,4 +223,51 @@ public class Connection {
 			listener.onEvent(event);
 		}
 	}
+	
+	public String postData(String type, ArrayList<NameValuePair> values) {
+		String result = "";
+		String data = "session=" + this.session + "&";
+		data += "_regid=" + ++this.reqCount + "&";
+		for(NameValuePair nvp : values) {
+			data += nvp;
+			if(values.indexOf(nvp)+1 < values.size()) {
+				data += "&";
+			}
+		}
+		System.out.println(data);
+		URL loginURL = null;
+		try {
+			loginURL = new URL(actionUrl+type);
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		HttpURLConnection loginConn = null;
+		try {
+			loginConn = (HttpURLConnection) loginURL.openConnection();
+			loginConn.addRequestProperty("Cookie", "session="+this.session);
+			loginConn.setDoOutput(true);
+			loginConn.connect();
+			OutputStreamWriter wr = new OutputStreamWriter(
+					loginConn.getOutputStream());
+			wr.write(data);
+			wr.flush();
+
+			BufferedReader rd = new BufferedReader(new InputStreamReader(
+					loginConn.getInputStream()));
+			String line;
+			while ((line = rd.readLine()) != null) {
+				result += line + "\n";
+			}
+
+			wr.close();
+			rd.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		} 
+		return result;
+	}
+	
 }
